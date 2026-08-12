@@ -1,3 +1,9 @@
+const http = require('http');
+http.createServer((req, res) => {
+  res.write("Bot aktif!");
+  res.end();
+}).listen(process.env.PORT || 3000);
+
 const mineflayer = require('mineflayer')
 const bot = mineflayer.createBot({
   host: 'mc.muzcraft.com',
