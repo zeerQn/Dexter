@@ -12,7 +12,7 @@ function startBot() {
   const bot = mineflayer.createBot({
     host: 'mc.muzcraft.com',
     username: 'LLoud',
-    version: '1.12.2',
+    version: '1.14.4',
     hideErrors: true
   });
 
