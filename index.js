@@ -1,67 +1,50 @@
-const http = require('http');
+const mineflayer = require('mineflayer')
+const http = require('http'); // Render/Uptime için eklendi
 
-// Render Uptime Portu
+// --- RENDER & UPTIME İÇİN WEB SUNUCUSU ---
+// Render uygulamanın bir portu dinlemesini bekler. Uptime botları buraya ping atar.
+const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
-  res.write("Bot aktif!");
-  res.end();
-}).listen(process.env.PORT || 3000);
+  res.writeHead(200);
+  res.end('Bot aktif ve calisiyor!');
+}).listen(PORT, () => {
+  console.log(`Render/Uptime icin web sunucusu ${PORT} portunda baslatildi.`);
+});
+// -----------------------------------------
 
-const mineflayer = require('mineflayer');
+const bot = mineflayer.createBot({
+  host: 'mc.muzcraft.com',
+  username: 'LLoud',
+  version: '1.12.2',
+  hideErrors: true
+});
 
-function startBot() {
-  const bot = mineflayer.createBot({
-    host: 'mc.muzcraft.com',
-    username: 'LLoud',
-    version: '1.8.9', // Muzcraft lobileri için en kararlı sürüm
-    hideErrors: false  // Hataları loglarda görmek için false yaptık
-  });
+// CHUNK YAZILARINI SUSTURAN GÜVENLİ YOL
+bot.on('kicked', console.log)
+bot.on('error', console.log)
 
-  bot.on('login', () => {
-    console.log('[BOT] Sunucuya bağlantı sağlandı!');
-  });
+bot.on('message', (msg) => {
+  const m = msg.toString();
+  console.log("SUNUCU: " + m);
 
-  bot.on('kicked', (reason) => {
-    console.log('[BOT] Sunucudan atıldı:', reason);
-  });
+  if (m.includes('/login') || m.includes('/gir')) {
+    bot.chat('/login loudofice');
+  }
 
-  bot.on('error', (err) => {
-    console.log('[BOT] Bağlantı Hatası:', err);
-  });
+  if (m.includes('Başarıyla giriş yaptınız') || m.includes('Lobiye bağlandınız')) {
+    setTimeout(() => bot.chat('/skyblock'), 5000);
+  }
 
-  bot.on('message', (msg) => {
-    const rawMsg = msg.toString();
-    // Renk kodlarını temizleyip küçük harfe çeviriyoruz
-    const cleanMsg = msg.toAnsi().replace(/\x1b\[[0-9;]*m/g, '').toLowerCase();
+  if (m.includes('SkyBlock') && !m.includes('Sunucusuna bağlanıyorsunuz')) {
+    setTimeout(() => bot.chat('/is go'), 10000);
+  }
+});
 
-    console.log("SUNUCU: " + rawMsg);
+setInterval(() => {
+  if (bot.entity) {
+    bot.setControlState('jump', true);
+    setTimeout(() => bot.setControlState('jump', false), 500);
+  }
+}, 15000);
 
-    if (cleanMsg.includes('/login') || cleanMsg.includes('/gir') || cleanMsg.includes('sifre')) {
-      bot.chat('/login loudofice');
-    }
-
-    if (cleanMsg.includes('başarıyla giriş') || cleanMsg.includes('lobiye bağlandınız')) {
-      setTimeout(() => bot.chat('/skyblock'), 5000);
-    }
-
-    if (cleanMsg.includes('skyblock') && !cleanMsg.includes('sunucusuna bağlanıyorsunuz')) {
-      setTimeout(() => bot.chat('/is go'), 10000);
-    }
-  });
-
-  // Zıplama AFK Engelleyici
-  setInterval(() => {
-    if (bot && bot.entity) {
-      bot.setControlState('jump', true);
-      setTimeout(() => bot.setControlState('jump', false), 500);
-    }
-  }, 15000);
-
-  // Yeniden Bağlanma Logic'i
-  bot.on('end', () => {
-    console.log("Bot oyundan düştü. 5 saniye sonra tekrar bağlanılıyor...");
-    setTimeout(startBot, 5000);
-  });
-}
-
-// Botu Başlat
-startBot();
+bot.on('end', () => setTimeout(() => process.exit(), 5000));
